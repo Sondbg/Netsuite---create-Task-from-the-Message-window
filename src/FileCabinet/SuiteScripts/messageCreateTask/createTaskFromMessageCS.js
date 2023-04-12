@@ -122,6 +122,10 @@ define(['N/log', 'N/record', 'N/currentRecord', 'N/ui/dialog', 'N/runtime', "./p
                         title: "error creating Activity",
                         details: error
                     })
+                    dialog.alert({
+                        title: "ГРЕШКА!!!!",
+                        message: "<b>ГРЕШКА ПРИ СЪЗДАВАНЕТО, МОЛЯ ОБЪРНЕТЕ CE КЪМ АДМИНИСТРАТОР!</b>"
+                    });
                 });
             }
 
