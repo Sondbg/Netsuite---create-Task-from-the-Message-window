@@ -2,12 +2,12 @@
  * @NApiVersion 2.1
  * @NScriptType UserEventScript
  */
-define(['N/log', 'N/record'],
+define(['N/log', 'N/record','./params/params.js'],
     /**
  * @param{log} log
  * @param{record} record
  */
-    (log, record) => {
+    (log, record, params) => {
         /**
          * Defines the function definition that is executed before record is loaded.
          * @param {Object} scriptContext
@@ -21,23 +21,23 @@ define(['N/log', 'N/record'],
             var form = scriptContext.form;
 
             var taskTab = form.addTab({
-                id: "custpage_activity_tab_msg",
-                label: "Задачи"
+                id: params.SETTINGS.TAB.ID,
+                label: params.SETTINGS.TAB.LABEL
             })
 
             form.addFieldGroup({
-                id: "custpage_group_activities",
-                label: "Създаване на задача",
-                tab: "custpage_activity_tab_msg"
+                id: params.SETTINGS.GROUP.ID,
+                label: params.SETTINGS.GROUP.LABEL,
+                tab: params.SETTINGS.TAB.ID
             })
 
             var taskType = form.addField({
-                id: "custpage_create_activity_checkbox",
-                label: "Тип задача",
-                type: "select",
-                container: "custpage_group_activities"
+                id: params.FIELDS.TYPE.id,
+                label: params.FIELDS.TYPE.label,
+                type: params.FIELDS.TYPE.type,
+                container: params.SETTINGS.GROUP.ID,
             });
-
+            
             taskType.addSelectOption({
                 value: 'task',
                 text: 'Task'
@@ -46,109 +46,38 @@ define(['N/log', 'N/record'],
                 value: 'phonecall',
                 text: 'Phone Call'
             });
-            taskType.addSelectOption({
-                value: 'calendarevent',
-                text: 'Event'
-            });
-            form.addField({
-                id: "custpage_task_name",
-                label: "Име на задачата",
-                type: "text",
-                container: "custpage_group_activities"
+            
+            var date=form.addField({
+                id: params.FIELDS.DATE.id,
+                label: params.FIELDS.DATE.label,
+                type: params.FIELDS.DATE.type,
+                container: params.SETTINGS.GROUP.ID
             });
 
-             form.addField({
-                id: "custpage_task_date",
-                label: "Дата:",
-                type: "date",
-                container: "custpage_group_activities"
-            });
-
-            var startTime = form.addField({
-                id: "custpage_task_start_time",
-                label: "Начален час:",
-                type: "TIMEOFDAY",
-                container: "custpage_group_activities"
-            });
-
-            startTime.updateBreakType({
-                breakType: "startcol"
-            });
-
-            form.addField({
-                id: "custpage_task_end_time",
-                label: "Краен час:",
-                type: "TIMEOFDAY",
-                container: "custpage_group_activities"
-            });
-
-            var reminder = form.addField({
-                id: "custpage_task_reminder",
-                label: "Напомняне:",
-                type: "select",
-                container: "custpage_group_activities"
-            });
 
             var memo = form.addField({
-                id: "custpage_task_memo",
-                label: "Съобщение:",
-                type: "longtext",
-                container: "custpage_group_activities"
+                id: params.FIELDS.MEMO.id,
+                label: params.FIELDS.MEMO.label,
+                type: params.FIELDS.MEMO.type,
+                container: params.SETTINGS.GROUP.ID
             });
 
             memo.updateBreakType({
                 breakType: "startcol"
             })
 
-
             form.clientScriptModulePath = './createTaskFromMessageCS.js';
 
             form.addButton({
-                id: "custpage_createTask_btn",
-                label: "Създай задача",
+                id: params.FIELDS.BUTTON.id,
+                label: params.FIELDS.BUTTON.label,
                 functionName: "createTask()"
             })
-            var minutes = {
-                "0 minutes": 0,
-                "5 minutes": 5,
-                "10 minutes": 10,
-                "15 minutes": 25,
-                "30 minutes": 30,
-                "1 hour": 60,
-                "2 hours": 120,
-                "3 hours": 180,
-                "4 hours": 240,
-                "5 hours": 300,
-                "8 hours": 480,
-                "12 hours": 720,
-                "1 day": 1440,
-                "2 days": 2880,
-                "3 days": 4320,
-                "1 week": 10080,
-            }
-
-            for (var time in minutes) {
-                reminder.addSelectOption({
-                    value: minutes[time],
-                    text: time
-                });
-            }
-        }
-
-        /**
-         * Defines the function definition that is executed before record is submitted.
-         * @param {Object} scriptContext
-         * @param {Record} scriptContext.newRecord - New record
-         * @param {Record} scriptContext.oldRecord - Old record
-         * @param {string} scriptContext.type - Trigger type; use values from the context.UserEventType enum
-         * @since 2015.2
-         */
-        const beforeSubmit = (scriptContext) => {
 
         }
 
 
 
-        return { beforeLoad, beforeSubmit }
+        return { beforeLoad }
 
     });

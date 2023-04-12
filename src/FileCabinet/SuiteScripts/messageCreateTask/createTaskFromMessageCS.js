@@ -3,82 +3,59 @@
  * @NScriptType ClientScript
  * @NModuleScope SameAccount
  */
-define(['N/log', 'N/record', 'N/currentRecord', 'N/ui/dialog', 'N/runtime'],
+define(['N/log', 'N/record', 'N/currentRecord', 'N/ui/dialog', 'N/runtime', "./params/params.js"],
     /**
      * @param{log} log
      * @param{record} record
      */
-    function (log, record, currentRecord, dialog, runtime) {
+    function (log, record, currentRecord, dialog, runtime, params) {
+        function pageInit(context){
+
+        }
         function createTask() {
 
             try {
 
                 var currMsg = currentRecord.get();
                 var memo = currMsg.getValue({
-                    fieldId: "custpage_task_memo"
+                    fieldId: params.FIELDS.MEMO.id
                 });
 
                 var taskType = currMsg.getValue({
-                    fieldId: "custpage_create_activity_checkbox"
-                });
-
-                var taskTitle = currMsg.getValue({
-                    fieldId: "custpage_task_name"
+                    fieldId: params.FIELDS.TYPE.id
                 });
 
                 var dateTask = currMsg.getValue({
-                    fieldId: "custpage_task_date"
+                    fieldId: params.FIELDS.DATE.id
                 });
 
-                var startTime = currMsg.getValue({
-                    fieldId: "custpage_task_start_time"
+                var recipient = currMsg.getText({
+                    fieldId: "recipient"
                 });
 
-                var endTime = currMsg.getValue({
-                    fieldId: "custpage_task_end_time"
-                });
-
-                var reminder = currMsg.getValue({
-                    fieldId: "custpage_task_reminder"
-                });
+                var title="Напомняне за връзка c клиент:"+recipient;
 
                 var arrValues = [
-                    {
-                        "value": taskTitle,
-                        "text": "Име на задачата"
-                    },
                     {
                         "value": taskType,
                         "text": "Тип задача"
                     },
                     {
                         "value": dateTask,
-                        "text": "Дата"
-                    },
-                    {
-                        "value": startTime,
-                        "text": "Начален час"
-                    },
-                    {
-                        "value": endTime,
-                        "text": "Краен час"
-                    },
-                    {
-                        "value": reminder,
-                        "text": "Напомняне"
+                        "text": "Дата за напомняне"
                     },
                     {
                         "value": memo,
                         "text": "Съобщение"
                     },
                 ];
-                var fieldsMissing = arrValues.filter((field) => {
+                var fieldsMissing = arrValues.filter(function (field) {
                     return field.value.length < 1
                 });
 
                 if (fieldsMissing.length > 0) {
-                    var dialogMsg = fieldsMissing.reduce((text, currValue) => {
-                        return text + `<br>${currValue.text}`
+                    var dialogMsg = fieldsMissing.reduce(function (text, currValue) {
+                        return text + "<br>"+currValue.text
                     }, "<b>Попълнете полетата!</b>")
                     dialog.alert({
                         title: "Моля попълнете следните полета:",
@@ -87,39 +64,29 @@ define(['N/log', 'N/record', 'N/currentRecord', 'N/ui/dialog', 'N/runtime'],
 
                     return
                 }
-                // if(startTime.toString()==endTime.toString()){
-                //     dialog.alert({
-                //         title: "Часовете не бива да се съвпадат!",
-                //         message: `Крайният час трябва да е различен от началният!`
-                //     })
-                //     return
-                // }
+
                 var user = runtime.getCurrentUser();
-                createActivity(taskType, memo, reminder, dateTask, taskTitle, user.id)
+                createActivity(taskType, memo, dateTask, title, user.id)
             } catch (err) {
                 log.error("Error creating the Activity", err)
             }
 
 
-            function createActivity(taskType, memo, reminder, dateTask, taskTitle, user) {
-                var dateObj= Date.now();
+            function createActivity(taskType, memo, dateTask, taskTitle, user) {
+                var dateObj= new Date();
                 dateObj.setHours(8);
-
+                var endDate= new Date();
+                endDate.setHours(9);
                 var defaultActivityValues = {
-                    task: {
                         "title": taskTitle,
                         "assigned": user,
-                        "status": "PROGRESS",
                         "startdate": dateTask,
                         "timedevent": true,
                         "starttime": dateObj,
-                        "endtime": dateObj,
+                        "endtime": endDate,
                         "remindertype": "EMAIL",
-                        "reminderminutes": reminder,
+                        "reminderminutes": "0",
                         "message": memo,
-                        "sendemail":false
-                    },
-
                 }
                 var activityRecord = record.create({
                     type: taskType,
@@ -127,19 +94,29 @@ define(['N/log', 'N/record', 'N/currentRecord', 'N/ui/dialog', 'N/runtime'],
                 });
 
 
-                for (var fieldID in defaultActivityValues[taskType]) {
+                for (var fieldID in defaultActivityValues) {
                     activityRecord.setValue({
                         fieldId: fieldID,
-                        value: defaultActivityValues[taskType][fieldID]
+                        value: defaultActivityValues[fieldID]
+                    });
+                }
+                if (taskType=="task"){
+                    activityRecord.setValue({
+                        fieldId: "sendemail",
+                        value: false
+                    });
+                    activityRecord.setValue({
+                        fieldId: "status",
+                        value: "PROGRESS"
                     });
                 }
                 activityRecord.save.promise().then(function (response) {
                     dialog.alert({
                         title: "Създадена задача!",
-                        message: "Задачата ви е създадена!"
+                        message: "Задачата ви e създадена!"
                     });
-
-                    log.debug("task ID", response)
+                    clearTaskInput()
+                    
                 }, function (error) {
                     log.error({
                         title: "error creating Activity",
@@ -148,11 +125,27 @@ define(['N/log', 'N/record', 'N/currentRecord', 'N/ui/dialog', 'N/runtime'],
                 });
             }
 
+            function clearTaskInput(){
+                currMsg.setValue({
+                    fieldId: "custpage_task_date",
+                    value: ""
+                });
+                currMsg.setValue({
+                    fieldId: "custpage_task_date",
+                    value: ""
+                });
+                currMsg.setValue({
+                    fieldId: "custpage_task_memo",
+                    value: ""
+                });
+            }
+
         }
 
 
         return {
-            createTask
+            pageInit:pageInit,
+            createTask:createTask
         };
 
     });
